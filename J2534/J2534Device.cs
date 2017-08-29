@@ -5,14 +5,14 @@ namespace J2534
 {
     public class J2534Device
     {
-        internal int DeviceID;
-        internal J2534Library Library;
-        public string FirmwareVersion;
-        public string LibraryVersion;
-        public string APIVersion;
-        public string DeviceName;
-        public string DrewtechVersion;
-        public string DrewtechAddress;
+        internal int DeviceID { get; private set; }
+        public J2534Library Library { get; private set; }
+        public string FirmwareVersion { get; private set; }
+        public string LibraryVersion { get; private set; }
+        public string APIVersion { get; private set; }
+        public string DeviceName { get; private set; }
+        public string DrewtechVersion { get; private set; }
+        public string DrewtechAddress { get; private set; }
         private bool ValidDevice;   //Flag used to determine if this device failed initial connection
 
         internal J2534Device(J2534Library Library)
@@ -42,16 +42,15 @@ namespace J2534
         {
             get
             {   
-                if(!ValidDevice)
-                    return false;
+                if (!ValidDevice) return false;
                 //GetVersion is used as a 'ping'
-                return (GetVersion() == J2534ERR.STATUS_NOERROR);
+                return (GetVersion().IsClear);
             }
         }
 
-        public J2534ERR ConnectToDevice(string Device)
+        public J2534Status ConnectToDevice(string Device)
         {
-            J2534ERR Status;
+            J2534Status Status = new J2534Status();
 
             IntPtr pDeviceName = IntPtr.Zero;
             if (!string.IsNullOrEmpty(Device))
@@ -63,17 +62,22 @@ namespace J2534
 
             lock (Library.API_LOCK)
             {
-                Status = (J2534ERR)Library.API.Open(pDeviceName, DeviceID);
+                Status.Code = Library.API.Open(pDeviceName, DeviceID);
 
                 Marshal.FreeHGlobal(pDeviceName);
 
-                if (Status == J2534ERR.STATUS_NOERROR || (Library.API_Signature.SAE_API == SAE_API.V202_SIGNATURE &&
-                                                            J2534Discovery.PhysicalDevices.FindAll(Listed => Listed.Library == this.Library).Count == 0 &&
-                                                            IsConnected))
+                if (Status.IsClear || (Library.API_Signature.SAE_API == SAE_API.V202_SIGNATURE &&
+                                       J2534Discovery.PhysicalDevices.FindAll(Listed => Listed.Library == this.Library).Count == 0 &&
+                                       IsConnected))
                 {
                     this.DeviceID = DeviceID;
                     ValidDevice = true;
+                    Status.Code = J2534ERR.STATUS_NOERROR;
                     GetVersion();
+                }
+                else
+                {
+                    Status.Description = Library.GetLastError();
                 }
                 return Status;
             }
@@ -81,41 +85,55 @@ namespace J2534
 
         public void DisconnectDevice()
         {
-            J2534ERR Status;
+            J2534Status Status = new J2534Status();
             lock (Library.API_LOCK)
-                Status = Library.API.Close(DeviceID);
-            if (Status != J2534ERR.STATUS_NOERROR)
-                throw new J2534Exception(Status, Library.GetLastError());
+            {
+                Status.Code = Library.API.Close(DeviceID);
+                if (Status.IsNOTClear)
+                {
+                    Status.Description = Library.GetLastError();
+                    throw new J2534Exception(Status);
+                }
+            }
         }
 
         public void SetProgrammingVoltage(J2534PIN PinNumber, int Voltage)
         {
-            J2534ERR Status;
+            J2534Status Status = new J2534Status();
             lock (Library.API_LOCK)
-                Status = (J2534ERR)Library.API.SetProgrammingVoltage(DeviceID, (int)PinNumber, Voltage);
-            if (Status != J2534ERR.STATUS_NOERROR)
-                throw new J2534Exception(Status, Library.GetLastError());
+            {
+                Status.Code = Library.API.SetProgrammingVoltage(DeviceID, (int)PinNumber, Voltage);
+                if (Status.IsNOTClear)
+                {
+                    Status.Description = Library.GetLastError();
+                    throw new J2534Exception(Status);
+                }
+            }
         }
 
-        private J2534ERR GetVersion()
+        private J2534Status GetVersion()
         {
-            J2534ERR Status;
+            J2534Status Status = new J2534Status();
             IntPtr pFirmwareVersion = Marshal.AllocHGlobal(80);
             IntPtr pDllVersion = Marshal.AllocHGlobal(80);
             IntPtr pApiVersion = Marshal.AllocHGlobal(80);
 
             lock (Library.API_LOCK)
             {
-                Status = (J2534ERR)Library.API.ReadVersion(DeviceID, pFirmwareVersion, pDllVersion, pApiVersion);
+                Status.Code = Library.API.ReadVersion(DeviceID, pFirmwareVersion, pDllVersion, pApiVersion);
 
-                if (Status == J2534ERR.STATUS_NOERROR)
+                if (Status.IsClear)
                 {
                     FirmwareVersion = Marshal.PtrToStringAnsi(pFirmwareVersion);
                     LibraryVersion = Marshal.PtrToStringAnsi(pDllVersion);
                     APIVersion = Marshal.PtrToStringAnsi(pApiVersion);
                 }
-                //No exception is thrown because this method is used as a 'Ping' and I don't
-                //want exceptions occuring just because a ping failed for any reason.
+                else
+                {
+                    Status.Description = Library.GetLastError();
+                    //No exception is thrown because this method is used as a 'Ping' and I don't
+                    //want exceptions occuring just because a ping failed for any reason.
+                }
                 Marshal.FreeHGlobal(pFirmwareVersion);
                 Marshal.FreeHGlobal(pDllVersion);
                 Marshal.FreeHGlobal(pApiVersion);
@@ -125,14 +143,17 @@ namespace J2534
 
         public int MeasureBatteryVoltage()
         {
-            J2534ERR Status;
+            J2534Status Status = new J2534Status();
 
             J2534HeapInt Voltage = new J2534HeapInt();
             lock (Library.API_LOCK)
             {
-                Status = (J2534ERR)Library.API.IOCtl(DeviceID, (int)J2534IOCTL.READ_VBATT, IntPtr.Zero, Voltage);
-                if (Status != J2534ERR.STATUS_NOERROR)
-                    throw new J2534Exception(Status, Library.GetLastError());
+                Status.Code = Library.API.IOCtl(DeviceID, (int)J2534IOCTL.READ_VBATT, IntPtr.Zero, Voltage);
+                if (Status.IsNOTClear)
+                {
+                    Status.Description = Library.GetLastError();
+                    throw new J2534Exception(Status);
+                }
 
                 //The return was kept inside the lock here to ensure the conversion to INT is done before the
                 //lock is released.  This is in case the API reuses the Ptr location for this data on subsequent
@@ -144,14 +165,17 @@ namespace J2534
 
         public int MeasureProgrammingVoltage()
         {
-            J2534ERR Status;
+            J2534Status Status = new J2534Status();
             J2534HeapInt Voltage = new J2534HeapInt();
 
             lock (Library.API_LOCK)
             {
-                Status = (J2534ERR)Library.API.IOCtl(DeviceID, (int)J2534IOCTL.READ_PROG_VOLTAGE, IntPtr.Zero, Voltage);
-                if (Status != J2534ERR.STATUS_NOERROR)
-                    throw new J2534Exception(Status, Library.GetLastError());
+                Status.Code = Library.API.IOCtl(DeviceID, (int)J2534IOCTL.READ_PROG_VOLTAGE, IntPtr.Zero, Voltage);
+                if (Status.IsNOTClear)
+                {
+                    Status.Description = Library.GetLastError();
+                    throw new J2534Exception(Status);
+                }
                 return Voltage;
             }
         }

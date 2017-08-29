@@ -4,9 +4,9 @@ using J2534;
 
 namespace SAE.Session
 {
-    class J1850PWM_Session : J1850Session , ISAESession
+    public class J1850PWM_Session : J1850Session, ISAESession
     {
-        private J2534Device device;
+        //private J2534Device device;
         private object resource_lock;
         private int this_physical_address;
 
@@ -16,15 +16,18 @@ namespace SAE.Session
             channel = device.ConstructChannel(J2534PROTOCOL.J1850PWM, J2534BAUD.J1850PWM, J2534CONNECTFLAG.NONE);
             if (channel.IsOpen)    //If channel is constructed successfully and is open 
             {
+                SessionProtocol = J2534PROTOCOL.J1850PWM;
                 InitializeDefaultConfigs();
             }
         }
 
-        private void InitializeDefaultConfigs()
+        protected void InitializeDefaultConfigs()
         {
+            SessionTxFlags = J2534TXFLAG.NONE;
             J1850Message default_message_builder = new J1850Message();
             default_message_builder.J1850_byte0 = 0xC4;
             default_message_prototype = default_message_builder.RawMessage;
+            channel.SetConfig(J2534PARAMETER.DATA_RATE, (int)J2534BAUD.J1850PWM_41600);
             channel.ClearMsgFilters();
             channel.ClearFunctMsgLookupTable();
             channel.AddToFunctMsgLookupTable(0x6B);
@@ -37,7 +40,7 @@ namespace SAE.Session
             ToolAddress = 0xF1;
         }
 
-        private int ToolAddress
+        protected int ToolAddress
         {
             get
             {

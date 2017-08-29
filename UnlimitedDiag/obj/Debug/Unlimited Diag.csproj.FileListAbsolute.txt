@@ -20,3 +20,5 @@ C:\Users\panasonic\Documents\EFI-Unlimited files\Projects\Unlimited-Diag\Unlimit
 C:\Users\panasonic\Documents\EFI-Unlimited files\Projects\Unlimited-Diag\UnlimitedDiag\bin\Debug\J2534.dll
 C:\Users\panasonic\Documents\EFI-Unlimited files\Projects\Unlimited-Diag\UnlimitedDiag\bin\Debug\J2534.pdb
 C:\Users\panasonic\Documents\EFI-Unlimited files\Projects\Unlimited-Diag\UnlimitedDiag\obj\Debug\UnlimitedDiag.Main_Form.resources
+C:\Users\panasonic\Documents\EFI-Unlimited files\Projects\Unlimited-Diag\UnlimitedDiag\bin\Debug\FordDiag.exe
+C:\Users\panasonic\Documents\EFI-Unlimited files\Projects\Unlimited-Diag\UnlimitedDiag\bin\Debug\FordDiag.pdb

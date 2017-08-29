@@ -26,6 +26,12 @@ namespace J2534
                 Screens.Remove(Screens.Find(Screen => Screen.ComparerHandle == ComparerHandle));
         }
 
+        public void RemoveAllScreens()
+        {
+            lock (LOCK)
+                Screens.Clear();
+        }
+
         public void Sift(List<J2534Message> Messages)
         {
             Messages.ForEach(Message =>
@@ -56,15 +62,17 @@ namespace J2534
         /// <returns></returns>
         public List<J2534Message> EmptyScreen(Predicate<J2534Message> ComparerHandle, bool Remove)
         {
+            List<J2534Message> Result;
             lock (LOCK)
             {
                 FilterScreen Screen = Screens.Find(_Screen => _Screen.ComparerHandle == ComparerHandle);
+                Result = new List<J2534Message>(Screen.Messages);
                 if (Remove)
                     Screens.Remove(Screen);
                 else
-                    Screen.Messages = new List<J2534Message>();
-                return Screen.Messages;
+                    Screen.Messages.Clear();
             }
+            return Result;
         }
     }
 

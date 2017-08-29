@@ -4,7 +4,7 @@ namespace J2534
 {
     public class GetMessageResults
     {
-        public J2534ERR Status { get; set; }
+        public J2534Status Status { get; set; }
         public List<J2534Message> Messages;
 
         public GetMessageResults()
@@ -12,12 +12,12 @@ namespace J2534
             Messages = new List<J2534Message>();
         }
 
-        public GetMessageResults(J2534ERR Status)
+        public GetMessageResults(J2534Status Status)
         {
             Messages = new List<J2534Message>();
             this.Status = Status;
         }
-        public GetMessageResults(List<J2534Message> Messages, J2534ERR Status)
+        public GetMessageResults(List<J2534Message> Messages, J2534Status Status)
         {
             this.Status = Status;
             this.Messages = Messages;
@@ -26,14 +26,14 @@ namespace J2534
 
     public class GetConfigResults
     {
-        public J2534ERR Status { get; set; }
+        public J2534Status Status { get; set; }
         public int Value { get; set; }
         public int Parameter { get; set; }
     }
 
     internal class GetNextCarDAQResults
     {
-        public J2534ERR Status { get; set; }
+        public J2534Status Status { get; set; }
         public bool Exists { get; set; }
         public string Name { get; set; }
         public string Version { get; set; }

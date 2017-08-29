@@ -15,39 +15,44 @@ namespace J2534
         public bool error_is_fatal { get; private set; }
         public bool error_is_hardware { get; private set; }
         public string Status_Description { get; private set; }
-        private J2534ERR status;
+        private J2534Status status;
 
         public J2534Exception()
         {
-            Status = 0;
+            Status.Code = 0;
         }
 
-        public J2534Exception(J2534ERR Status)
+        public J2534Exception(J2534Status Status)
         {
             this.Status = Status;
         }
 
-        public J2534Exception(J2534ERR Status, string Message) : base(Message)
+
+        public J2534Exception(J2534Status Status, string Message) : base(Message)
         {
             this.Status = Status;
 
         }
 
-        public J2534Exception(J2534ERR Status, string Message, Exception Inner) : base(Message, Inner)
+        public J2534Exception(J2534Status Status, string Message, Exception Inner) : base(Message, Inner)
         {
             this.Status = Status;
         }
 
-        public J2534ERR Status
+        public J2534Exception(string Message) : base(Message)
+        {
+        }
+
+        public J2534Status Status
         {
             get
             {
-                return Status;
+                return status;
             }
             private set
             {
                 status = value;
-                ParseError(status);
+                ParseError(status.Code);
             }
         }
 

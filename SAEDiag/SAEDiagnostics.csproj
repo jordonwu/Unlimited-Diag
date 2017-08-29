@@ -48,13 +48,9 @@
     <Compile Include="SAEDiscovery.cs" />
     <Compile Include="SAEDefinitions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SAEDiag.cs" />
-    <Compile Include="SAEMessage_old.cs" />
     <Compile Include="DataClasses\SAEMode.cs" />
-    <Compile Include="SAESession.cs" />
     <Compile Include="Session\Ford_PWM_Session.cs" />
     <Compile Include="Session\J1850Session.cs" />
-    <Compile Include="Session\SAE_Session.cs" />
     <Compile Include="Session\ISO14229_Session.cs" />
     <Compile Include="Session\ISO15765_Session.cs" />
     <Compile Include="Session\ISO9141_Session.cs" />

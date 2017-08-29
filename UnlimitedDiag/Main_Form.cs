@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using J2534;
 using SAE;
 using System.Runtime.InteropServices;
+using FordDiag;
 
 namespace UnlimitedDiag
 {
@@ -16,7 +17,7 @@ namespace UnlimitedDiag
             InitializeComponent();
 
             PhysicalDevices = J2534Discovery.OpenEverything();
-            List<J1979Session> S = SAEDiscovery.ConnectEverything(PhysicalDevices);
+            //List<J1979Session> S = SAEDiscovery.ConnectEverything(PhysicalDevices);
 
         }
 
@@ -26,22 +27,37 @@ namespace UnlimitedDiag
                 return;
             if (!PhysicalDevices[0].IsConnected)
                 return;
+
+            FordDiag.Controllers.Ford_SCP_Module module = new FordDiag.Controllers.Ford_SCP_Module(PhysicalDevices[0]);
+            //            module.salt = 0x00;
+            //            byte [] ans = module.ComputeKey1(new byte[] { 0x4C, 0xC4, 0x0B});
+            //            return;
+            try
+            {
+                module.WriteFirmware();
+            }
+            catch (Exception ex)
+            {
+
+            }
+
             /* SAESession DiagSession = new SAESession(PhysicalDevices[0]); //Will do ping discovery on construction
              * Mode01Results Results = DiagSession.Mode01();
             */
-            Channel Ch = PhysicalDevices[0].ConstructChannel(J2534PROTOCOL.ISO15765, J2534BAUD.ISO15765, J2534CONNECTFLAG.NONE);
 
-            if (Ch == null)
-                return;
+            //Channel Ch = PhysicalDevices[0].ConstructChannel(J2534PROTOCOL.ISO15765, J2534BAUD.ISO15765, J2534CONNECTFLAG.NONE);
 
-            Ch.StartMsgFilter(new MessageFilter(COMMONFILTER.STANDARDISO15765, new byte[] { 0x00, 0x00, 0x07, 0xE0 }));
-            Ch.SetConfig(J2534PARAMETER.LOOP_BACK, 0);
+            //if (Ch == null)
+            //    return;
 
-            SAE.SAEDiag Diagnostic = new SAE.SAEDiag();
+            //Ch.StartMsgFilter(new MessageFilter(COMMONFILTER.STANDARDISO15765, new byte[] { 0x00, 0x00, 0x07, 0xE0 }));
+            //Ch.SetConfig(J2534PARAMETER.LOOP_BACK, 0);
 
-            if (Diagnostic.Ping(Ch))
-                MessageBox.Show("We have a successful ping!");
-            Ch.Disconnect();
+            //SAE.SAEDiag Diagnostic = new SAE.SAEDiag();
+
+            //if (Diagnostic.Ping(Ch))
+            //    MessageBox.Show("We have a successful ping!");
+            //Ch.Disconnect();
         }
 
         private void CmdReadVoltageClick(object sender, EventArgs e)

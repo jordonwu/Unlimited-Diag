@@ -201,8 +201,9 @@ namespace SAE
                 }
                 else
                 {
-                    ResponseByte = Enum.IsDefined(typeof(SAE_responses), value.Last()) ? (SAE_responses)value.Last() : SAE_responses.MANUFACTURER_SPECIFIC;
                     Data = value.Skip(1 + RxDataIndex).ToArray();
+                    if(Data.Any())
+                        ResponseByte = Enum.IsDefined(typeof(SAE_responses), (Int32)Data.Last()) ? (SAE_responses)value.Last() : SAE_responses.MANUFACTURER_SPECIFIC;
                 }
             }
         }
@@ -238,7 +239,21 @@ namespace SAE
                                                    TestMessage.RxStatus == J2534.J2534RXFLAG.NONE)
                                                {
                                                    if (TestMessage.Data[3] == (byte)SAEMode.ResponseMode)
+                                                   {
                                                        return true;
+                                                       if (RxDataIndex == 0)    //If the message has no parameter bytes
+                                                           return true;
+                                                       if(TestMessage.Data.Length > (RxDataIndex + 3))
+                                                       {
+                                                           for(int i = 4;i < (RxDataIndex + 4); i++)    //Test the parameter bytes
+                                                           {
+                                                               if (TestMessage.Data[i] != RawMessage[i])
+                                                                   return false;    //Fail if there is a non-match
+                                                           }
+                                                           return true; //pass if all parameter bytes match
+                                                       }
+                                                       return false;    //Fail if there are not enough bytes in the message
+                                                   }
                                                    else if (TestMessage.Data[3] == (byte)SAEModes.GENERAL_RESPONSE &&
                                                            TestMessage.Data.Length > 4 &&
                                                            TestMessage.Data[4] == (byte)SAEMode)

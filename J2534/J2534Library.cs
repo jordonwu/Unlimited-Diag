@@ -4,13 +4,12 @@ using System.Text;
 
 namespace J2534
 {
-    internal class J2534Library
+    public class J2534Library
     {
-        internal string FileName;
-        internal API_SIGNATURE API_Signature;
-        internal bool IsLoaded;
-        internal J2534APIWrapper API;
-        //internal J2534ERR Status;
+        public string FileName { get; private set; }
+        internal API_SIGNATURE API_Signature { get; private set; }
+        public bool IsLoaded { get; private set; }
+        internal J2534APIWrapper API { get; private set; }
         internal object API_LOCK = new object();
 
         public string API_Support
@@ -94,43 +93,47 @@ namespace J2534
             //API.GetNextDevice(pSDevice);
         }
 
-        internal J2534ERR GetNextCarDAQ_RESET()
+        internal J2534Status GetNextCarDAQ_RESET()
         {
-            J2534ERR Status;
-            lock(API_LOCK)
-                Status = (J2534ERR)API.GetNextCarDAQ(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+            J2534Status Status = new J2534Status();
+            lock (API_LOCK)
+            {
+                Status.Code = API.GetNextCarDAQ(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+                if (Status.IsNOTClear)
+                {
+                    Status.Description = GetLastError();
+                }
+            }
 
             return Status;
         }
 
         internal GetNextCarDAQResults GetNextCarDAQ()
         {
-            J2534ERR Status;
+            J2534Status Status = new J2534Status();
             IntPtr pName = Marshal.AllocHGlobal(4);
             IntPtr pAddr = Marshal.AllocHGlobal(4);
             IntPtr pVer = Marshal.AllocHGlobal(4);
 
             lock (API_LOCK)
             {
-                Status = (J2534ERR)API.GetNextCarDAQ(pName, pVer, pAddr);
+                Status.Code = API.GetNextCarDAQ(pName, pVer, pAddr);
 
 
-                if (Status == J2534ERR.FUNCTION_NOT_ASSIGNED || Marshal.ReadIntPtr(pName) == IntPtr.Zero)
+                if (Status.Code == J2534ERR.FUNCTION_NOT_ASSIGNED || Marshal.ReadIntPtr(pName) == IntPtr.Zero)
                 {
                     Marshal.FreeHGlobal(pName);
                     Marshal.FreeHGlobal(pVer);
                     Marshal.FreeHGlobal(pAddr);
-                    return new GetNextCarDAQResults()
-                    {
-                        Exists = false,
-                    };
+                    return new GetNextCarDAQResults() { Exists = false };
                 }
-                else if (Status != J2534ERR.STATUS_NOERROR)
+                else if (Status.IsNOTClear)
                 {
+                    Status.Description = GetLastError();
                     Marshal.FreeHGlobal(pName);
                     Marshal.FreeHGlobal(pVer);
                     Marshal.FreeHGlobal(pAddr);
-                    throw new J2534Exception(Status, GetLastError());
+                    throw new J2534Exception(Status);
                 }
 
                 byte[] b = new byte[3];
@@ -152,19 +155,18 @@ namespace J2534
             }
         }
 
-        public string GetLastError()
+        internal string GetLastError()  //Should never be called outside of API_LOCK
         {
             J2534ERR Status;
-            string status_string = null;
+            string error_description;
             IntPtr pErrorDescription = Marshal.AllocHGlobal(80);
-            lock (API_LOCK)
-            {
-                Status = (J2534ERR)API.GetLastError(pErrorDescription);
-                if (Status == J2534ERR.STATUS_NOERROR)
-                    status_string = Marshal.PtrToStringAnsi(pErrorDescription);
-                Marshal.FreeHGlobal(pErrorDescription);
-            }
-            return status_string;
+            Status = (J2534ERR)API.GetLastError(pErrorDescription);
+            if (Status == J2534ERR.STATUS_NOERROR)
+                error_description = Marshal.PtrToStringAnsi(pErrorDescription);
+            else
+                error_description = String.Format("GetLastError failed with status: {0}", Status.ToString());
+            Marshal.FreeHGlobal(pErrorDescription);
+            return error_description;
         }
     }
 }

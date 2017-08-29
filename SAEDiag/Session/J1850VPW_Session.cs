@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SAE.Session
 {
-    class J1850VPW_Session : SAE_Session
+    class J1850VPW_Session : J1850Session
     {
     }
 }

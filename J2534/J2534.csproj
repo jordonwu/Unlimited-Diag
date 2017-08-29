@@ -69,6 +69,7 @@
     <Compile Include="DataClasses\J2534HeapMessage.cs" />
     <Compile Include="DataClasses\J2534HeapMessageArray.cs" />
     <Compile Include="DataClasses\J2534Message.cs" />
+    <Compile Include="DataClasses\J2534Status.cs" />
     <Compile Include="DataClasses\MessageFilter.cs" />
     <Compile Include="DataClasses\PeriodicMessage.cs" />
     <Compile Include="DataClasses\ReturnResultsClasses.cs" />

@@ -31,34 +31,40 @@ namespace SAE.Session
             channel.SetConfig(J2534PARAMETER.LOOP_BACK, 0);
         }
 
-        public SAEMessage SAETxRx(int Addr, byte Mode, byte[] Params, byte[] Data)
+        public SAEMessage SAETxRx(SAEMessage Message, int RxDataIndex)
         {
-            GetMessageResults Results;
-            object _handle = CreateRxHandle(Addr, Mode, Params);
+            //GetMessageResults Results;
+            //object _handle = CreateRxHandle(Addr, Mode, Params);
 
-            TxMessage.SAEMode = Mode;
-            TxMessage.PID = PID_record_num;
-            TxMessage.TargetAddress = Module.Address;
-            Results = channel.MessageTransaction(TxMessage, 1, TxMessage.DefaultRxComparer);
-            if (Results.Status == J2534ERR.STATUS_NOERROR)
-                Module.Parse_PID_Validation_Bytes(PID_record_num, Results.Messages[0].Data);
+            //TxMessage.SAEMode = Mode;
+            //TxMessage.PID = PID_record_num;
+            //TxMessage.TargetAddress = Module.Address;
+            //Results = channel.MessageTransaction(TxMessage, 1, TxMessage.DefaultRxComparer);
+            //if (Results.Status == J2534ERR.STATUS_NOERROR)
+            //    Module.Parse_PID_Validation_Bytes(PID_record_num, Results.Messages[0].Data);
+            throw new NotImplementedException();
 
         }
-        public void SAETx(int Addr, byte Mode, List<byte[]> Data)
+        public void SAETx(SAEMessage Message)
         {
-
+            throw new NotImplementedException();
         }
         public List<byte[]> SAERx(int Addr, byte Mode, int NumOfMsgs)
         {
-
+            throw new NotImplementedException();
         }
-        public object CreateRxHandle(int Addr, byte Mode, byte[] Params)
+        public object CreateRxHandle(int Addr, SAEModes Mode)
         {
-
+            throw new NotImplementedException();
         }
         public List<byte[]> SAERx(object RxHandle, int NumOfMsgs, int Timeout, bool DestroyHandle)
         {
+            throw new NotImplementedException();
+        }
 
+        public void DestroyRxHandle(object Handle)
+        {
+            throw new NotImplementedException();
         }
 
     }

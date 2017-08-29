@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SAE.Session
 {
-    class ISO14229_Session : SAE_Session
+    class ISO14229_Session
     {
     }
 }

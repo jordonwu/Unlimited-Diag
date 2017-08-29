@@ -28,7 +28,7 @@ namespace J2534
             {
                 if (value > array_max_length)
                 {
-                    throw new IndexOutOfRangeException("Length is greater than array bound");
+                    throw new IndexOutOfRangeException("Length is greater than array bound (HEAPMessageArray)");
                 }
                 else
                     length = value;
@@ -87,25 +87,28 @@ namespace J2534
             return data;
         }
 
-        public static implicit operator IntPtr(J2534HeapMessageArray HeapMessageArray)
+        public IntPtr Ptr
         {
-            return HeapMessageArray.pMessages;
+            get
+            {
+                return pMessages;
+            }
         }
 
-        public void PopulateWith(List<J2534Message> Messages)
+        public void Insert(List<J2534Message> Messages)
         {
             Length = Messages.Count;
             for (int i = 0; i < Messages.Count; i++)
                 this[i] = Messages[i];
         }
 
-        public void PopulateWith(J2534Message Message)
+        public void Insert(J2534Message Message)
         {
             Length = 1;
             this[0] = Message;
         }
 
-        public void PopulateWith(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, byte[] Data)
+        public void Insert(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, byte[] Data)
         {
             Length = 1;
             Marshal.WriteInt32(pMessages, (int)ProtocolID);

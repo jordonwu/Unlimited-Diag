@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace J2534
@@ -14,7 +16,7 @@ namespace J2534
             pMessage = Marshal.AllocHGlobal(CONST.J2534MESSAGESIZE);
         }
 
-        public J2534HeapMessage(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, byte[] Data)
+        public J2534HeapMessage(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<byte> Data)
         {
             pMessage = Marshal.AllocHGlobal(CONST.J2534MESSAGESIZE);
             this.ProtocolID = ProtocolID;
@@ -125,7 +127,7 @@ namespace J2534
             }
         }
 
-        public byte[] Data
+        public IEnumerable<byte> Data
         {
             get
             {
@@ -133,14 +135,14 @@ namespace J2534
             }
             set
             {
-                if (value.Length > (CONST.J2534MESSAGESIZE - 24))
+                if (value.Count() > (CONST.J2534MESSAGESIZE - 24))
                 {
                     throw new ArgumentException("Message Data.Length is greator than fixed maximum");
                 }
                 else
                 {
-                    Length = value.Length;
-                    Marshal.Copy(value, 0, IntPtr.Add(pMessage, 24), value.Length);
+                    Length = value.Count();
+                    Marshal.Copy(value.ToArray(), 0, IntPtr.Add(pMessage, 24), value.Count());
                 }
             }
         }

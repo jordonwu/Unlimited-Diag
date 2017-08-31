@@ -22,7 +22,13 @@ namespace J2534
         public int DefaultRxTimeout { get; set; }
         public J2534TXFLAG DefaultTxFlag { get; set; }
 
-        //Channel Constructor
+        /// <summary>
+        /// Establish a logical communication channel with the vehicle network (via the PassThru device) using the specified network layer protocol and selected protocol options.
+        /// </summary>
+        /// <param name="Device">Vehicle interface identifier</param>
+        /// <param name="ProtocolID">The protocol identifier selects the network layer protocol that will be used for the communications channel</param>
+        /// <param name="Baud">Initial baud rate for the channel</param>
+        /// <param name="ConnectFlags">Protocol specific options that are defined by bit fields. This parameter is usually set to zero</param>
         internal Channel(J2534Device Device, J2534PROTOCOL ProtocolID, J2534BAUD Baud, J2534CONNECTFLAG ConnectFlags)
         {
             HeapMessageArray = new J2534HeapMessageArray(CONST.HEAPMESSAGEBUFFERSIZE);
@@ -53,19 +59,21 @@ namespace J2534
             }
         }
 
+        /// <summary>
+        /// Terminate an existing logical communication channel between the User Application and the vehicle network (via the PassThru device). Once disconnected the channel identifier or handle is invalid. For the associated network protocol this function will terminate the transmitting of periodic messages and the filtering of receive messages. The PassThru device periodic and filter message tables will be cleared
+        /// </summary>
         public void Disconnect()
         {
             if (IsOpen)
             {
-                J2534Status Status = new J2534Status();
                 lock (Device.Library.API_LOCK)
                 {
                     IsOpen = false;
-                    Status.Code = Device.Library.API.Disconnect(ChannelID);
-                    if (Status.IsNOTClear)
+                    ConnectionStatus.Code = Device.Library.API.Disconnect(ChannelID);
+                    if (ConnectionStatus.IsNOTClear)
                     {
-                        Status.Description = Device.Library.GetLastError();
-                        throw new J2534Exception(Status);
+                        ConnectionStatus.Description = Device.Library.GetLastError();
+                        throw new J2534Exception(ConnectionStatus);
                     }
                 }
             }
@@ -86,7 +94,7 @@ namespace J2534
             MessageSieve.RemoveAllScreens();
         }
 
-        public GetMessageResults MessageTransaction(List<byte> TxMessageData, int NumOfRxMsgs, Predicate<J2534Message> Comparer)
+        public GetMessageResults MessageTransaction(IEnumerable<byte> TxMessageData, int NumOfRxMsgs, Predicate<J2534Message> Comparer)
         {
             MessageSieve.AddScreen(10, Comparer);
             J2534Status Status = SendMessage(TxMessageData.ToArray());
@@ -96,7 +104,7 @@ namespace J2534
 
         public GetMessageResults MessageTransaction(List<J2534Message> TxMessages, int NumOfRxMsgs, Predicate<J2534Message> Comparer)
         {
-            MessageSieve.AddScreen(10, Comparer);
+            lock (MessageSieve) MessageSieve.AddScreen(10, Comparer);
             J2534Status Status = SendMessages(TxMessages);
             if (Status.IsClear) return GetMessages(NumOfRxMsgs, DefaultRxTimeout, Comparer, true);
             throw new J2534Exception(Status);
@@ -119,12 +127,11 @@ namespace J2534
         }
 
         /// <summary>
-        /// Reads 'NumMsgs' messages from the input buffer and then the device.  Will block
-        /// until it gets 'NumMsgs' messages, or 'Timeout' expires.
+        /// Attempts to read 'NumMsgs' messages from the J2534 Device within 'Timeout' time.
         /// </summary>
-        /// <param name="NumMsgs"></param>
-        /// <param name="Timeout"></param>
-        /// <returns>Returns 'false' if successful</returns>
+        /// <param name="NumMsgs">The desired number of J2534 messages. Due to timeouts, the number of messages returned may be less than the number requested.  Number must be less than or equal to J2534.CONST.HEAPMESSAGEBUFFERSIZE (default is 200)</param>
+        /// <param name="Timeout">Timeout (in milliseconds) for read completion. A value of zero reads buffered messages and returns immediately. A non-zero value blocks (does not return) until the specified number of messages have been read, or until the timeout expires.</param>
+        /// <returns>Returns get message results</returns>
         public GetMessageResults GetMessages(int NumMsgs, int Timeout)
         {
             GetMessageResults Results = new GetMessageResults();
@@ -139,30 +146,36 @@ namespace J2534
             return Results;
         }
 
-        //Thread safety in this method assumes that each thread will have unique comparers
+        //Thread safety in this method assumes that each call will have unique comparers
+        //An option is to lock on the ComparerHandle, but that seems unnecessary
+        //There is no good reason I know of that multiple call would be made to this method
+        //using the same ComparerHandle
         public GetMessageResults GetMessages(int NumMsgs, int Timeout, Predicate<J2534Message> ComparerHandle, bool Remove)
         {
-            bool GetMoreMessages;
+            bool WantMoreMessages;
             Stopwatch FunctionTimer = new Stopwatch();
             FunctionTimer.Start();
-
+            long actual_execution_time;
             do
             {
+                //execution time is measured here to guarentee the API will actually get
+                //TIMEOUT to eport messages.  This covers the case of this thread being preempted
+                //and blocked for a significant time.
+                actual_execution_time = FunctionTimer.ElapsedMilliseconds;
                 GetMessageResults RxMessages = GetMessages(CONST.HEAPMESSAGEBUFFERSIZE, 0);
                 if (RxMessages.Status.IsClear ||
                     RxMessages.Status.Code == J2534ERR.BUFFER_EMPTY)
                 {
                     MessageSieve.Sift(RxMessages.Messages);
-
                 }
                 else
                     throw new J2534Exception(RxMessages.Status);
-                GetMoreMessages = (MessageSieve.ScreenMessageCount(ComparerHandle) < NumMsgs);
+                WantMoreMessages = (MessageSieve.ScreenMessageCount(ComparerHandle) < NumMsgs);
 
-            } while (GetMoreMessages && (FunctionTimer.ElapsedMilliseconds < Timeout));
+            } while (WantMoreMessages && (actual_execution_time < Timeout));
 
-            if(GetMoreMessages)
-                return new GetMessageResults(MessageSieve.EmptyScreen(ComparerHandle, Remove), new J2534Status(J2534ERR.TIMEOUT));
+            if(WantMoreMessages)
+                return new GetMessageResults(MessageSieve.EmptyScreen(ComparerHandle, Remove), new J2534Status(J2534ERR.TIMEOUT, "Timeout expired before all messages could be received in GetMessages"));
             else
                 return new GetMessageResults(MessageSieve.EmptyScreen(ComparerHandle, Remove), new J2534Status(J2534ERR.STATUS_NOERROR));
         }

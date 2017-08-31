@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
@@ -36,6 +38,7 @@ namespace J2534
         }
 
         public J2534Message this[int index]
+
         {
             get
             {
@@ -65,9 +68,9 @@ namespace J2534
                 Marshal.WriteInt32(pMessage, 4, (int)value.RxStatus);
                 Marshal.WriteInt32(pMessage, 8, (int)value.TxFlags);
                 Marshal.WriteInt32(pMessage, 12, (int)value.Timestamp);
-                Marshal.WriteInt32(pMessage, 16, value.Data.Length);
+                Marshal.WriteInt32(pMessage, 16, (int)value.Data.Count());
                 Marshal.WriteInt32(pMessage, 20, (int)value.ExtraDataIndex);
-                Marshal.Copy(value.Data, 0, IntPtr.Add(pMessage, 24), value.Data.Length);
+                Marshal.Copy(value.Data.ToArray(), 0, IntPtr.Add(pMessage, 24), value.Data.Count());
             }
         }
 
@@ -108,15 +111,28 @@ namespace J2534
             this[0] = Message;
         }
 
-        public void Insert(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, byte[] Data)
+        public void Insert(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<byte> Data)
         {
             Length = 1;
             Marshal.WriteInt32(pMessages, (int)ProtocolID);
             Marshal.WriteInt32(pMessages, 8, (int)TxFlags);
-            Marshal.WriteInt32(pMessages, 16, Data.Length);
-            Marshal.Copy(Data, 0, IntPtr.Add(pMessages, 24), Data.Length);
+            Marshal.WriteInt32(pMessages, 16, Data.Count());
+            Marshal.Copy(Data.ToArray(), 0, IntPtr.Add(pMessages, 24), Data.Count());
         }
 
+        public void Insert(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<IEnumerable<byte>> ListOfData)
+        {
+            Length = ListOfData.Count();
+            IntPtr pMessage = IntPtr.Add(pMessages, 0); //Create a pointer to iterate over
+            foreach(var data in ListOfData)
+            {
+                Marshal.WriteInt32(pMessage, (int)ProtocolID);
+                Marshal.WriteInt32(pMessage, 8, (int)TxFlags);
+                Marshal.WriteInt32(pMessage, 16, data.Count());
+                Marshal.Copy(data.ToArray(), 0, IntPtr.Add(pMessage, 24), data.Count());
+                pMessage = IntPtr.Add(pMessage, CONST.J2534MESSAGESIZE);
+            }
+        }
         // Public implementation of Dispose pattern callable by consumers.
         public void Dispose()
         {

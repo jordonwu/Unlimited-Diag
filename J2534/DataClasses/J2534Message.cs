@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace J2534
 {
@@ -9,21 +10,17 @@ namespace J2534
         public J2534TXFLAG TxFlags { get; set; }
         public uint Timestamp { get; set; }
         public uint ExtraDataIndex { get; set; }
-        public byte[] Data { get; set; }
+        public IEnumerable<byte> Data { get; set; }
 
         public J2534Message()
         {
-            Data = Array.Empty<byte>();
         }
 
-        public J2534Message(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, byte[] Data)
+        public J2534Message(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<byte> Data)
         {
             this.ProtocolID = ProtocolID;
             this.TxFlags = TxFlags;
-            if (Data == null)
-                this.Data = Array.Empty<byte>();
-            else
-                this.Data = Data;
+            this.Data = Data;
         }
     }
 }

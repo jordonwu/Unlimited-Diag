@@ -71,6 +71,7 @@
     <Compile Include="DataClasses\J2534Message.cs" />
     <Compile Include="DataClasses\J2534Status.cs" />
     <Compile Include="DataClasses\MessageFilter.cs" />
+    <Compile Include="DataClasses\NativePassThruMessage.cs" />
     <Compile Include="DataClasses\PeriodicMessage.cs" />
     <Compile Include="DataClasses\ReturnResultsClasses.cs" />
     <Compile Include="DataClasses\SieveAndFilterScreen.cs" />

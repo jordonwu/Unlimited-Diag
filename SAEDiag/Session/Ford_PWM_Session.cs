@@ -53,7 +53,7 @@ namespace SAE.Session.Ford
         public bool CatchBroadcastMessage(int Timeout = 200)
         {
             GetMessageResults Results = channel.GetMessages(1, Timeout, broadcast_rx_handle, false);
-            if (Results.Status != J2534ERR.STATUS_NOERROR)
+            if (Results.Status.IsNOTClear)
                 return false;
             broadcastmessage = Results.Messages[0].Data;
             channel.RemoveMessageScreen(broadcast_rx_handle);

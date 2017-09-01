@@ -128,7 +128,7 @@ namespace J2534
             Marshal.Copy(dataarray, 0, IntPtr.Add(pMessages, 24), dataarray.Length);
         }
 
-        public void Insert(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<IEnumerable<byte>> DataList)
+        public void DeepCopy(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<IEnumerable<byte>> DataList)
         {
             IntPtr pMessage = new IntPtr((int)pMessages);
             int index = 0;

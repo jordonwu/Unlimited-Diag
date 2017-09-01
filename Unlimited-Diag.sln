@@ -9,13 +9,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAEDiagnostics", "SAEDiag\S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "J2534", "J2534\J2534.csproj", "{D99E0DE7-2F06-41E3-B33E-687E1B425A7F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ford_Diagnostics", "WindowsFormsApplication1\Ford_Diagnostics.csproj", "{DF14A6BB-1DFA-47D8-8593-AFA2A21ACAA4}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utility Classes", "Utility Classes", "{192BC437-5867-4178-8687-A8E947B245EB}"
 	ProjectSection(SolutionItems) = preProject
 		Memory_Data.cs = Memory_Data.cs
 		VirtualMemory.cs = VirtualMemory.cs
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ford_Diagnostics", "FordDiagnostics\Ford_Diagnostics.csproj", "{DF14A6BB-1DFA-47D8-8593-AFA2A21ACAA4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

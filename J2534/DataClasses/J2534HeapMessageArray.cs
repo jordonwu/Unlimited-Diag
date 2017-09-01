@@ -15,6 +15,8 @@ namespace J2534
 
         public J2534HeapMessageArray(int Length)
         {
+            if (Length < 1)
+                throw new ArgumentException("Length must be at least 1 (HEAPMessageArray");
             array_max_length = Length;
             length = new J2534HeapInt();
             pMessages = Marshal.AllocHGlobal(CONST.J2534MESSAGESIZE * Length);
@@ -98,11 +100,16 @@ namespace J2534
             }
         }
 
-        public void Insert(List<J2534Message> Messages)
+        public void Insert(IEnumerable<J2534Message> Messages)
         {
-            Length = Messages.Count;
-            for (int i = 0; i < Messages.Count; i++)
-                this[i] = Messages[i];
+            var MessageEnumerator = Messages.GetEnumerator();
+            int index = 0;
+            foreach(J2534Message Message in Messages)
+            {
+                this[index] = Message;
+                index++;
+            }
+            Length = index;
         }
 
         public void Insert(J2534Message Message)
@@ -114,24 +121,37 @@ namespace J2534
         public void Insert(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<byte> Data)
         {
             Length = 1;
+            byte[] dataarray = Data.ToArray();
             Marshal.WriteInt32(pMessages, (int)ProtocolID);
             Marshal.WriteInt32(pMessages, 8, (int)TxFlags);
             Marshal.WriteInt32(pMessages, 16, Data.Count());
-            Marshal.Copy(Data.ToArray(), 0, IntPtr.Add(pMessages, 24), Data.Count());
+            Marshal.Copy(dataarray, 0, IntPtr.Add(pMessages, 24), dataarray.Length);
         }
 
-        public void Insert(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<IEnumerable<byte>> ListOfData)
+        public void Insert(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<IEnumerable<byte>> DataList)
         {
-            Length = ListOfData.Count();
-            IntPtr pMessage = IntPtr.Add(pMessages, 0); //Create a pointer to iterate over
-            foreach(var data in ListOfData)
+            IntPtr pMessage = new IntPtr((int)pMessages);
+            int index = 0;
+            byte [] dataarray;
+            foreach (var Data in DataList)
             {
+                index++;
+                if (index > array_max_length)
+                {
+                    throw new IndexOutOfRangeException("Index is greater than array bound");
+                }
                 Marshal.WriteInt32(pMessage, (int)ProtocolID);
                 Marshal.WriteInt32(pMessage, 8, (int)TxFlags);
-                Marshal.WriteInt32(pMessage, 16, data.Count());
-                Marshal.Copy(data.ToArray(), 0, IntPtr.Add(pMessage, 24), data.Count());
+                if (Data is Array)  //Save the cost of newing an array
+                    dataarray = (byte[])Data;
+                else
+                    dataarray = Data.ToArray();
+                Marshal.WriteInt32(pMessage, 16, dataarray.Length);
+                Marshal.Copy(dataarray, 0, IntPtr.Add(pMessage, 24), dataarray.Length);
+
                 pMessage = IntPtr.Add(pMessage, CONST.J2534MESSAGESIZE);
             }
+            Length = index;
         }
         // Public implementation of Dispose pattern callable by consumers.
         public void Dispose()

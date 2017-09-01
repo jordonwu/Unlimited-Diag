@@ -77,6 +77,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\FordDiagnostics\Ford_Diagnostics.csproj">
+      <Project>{df14a6bb-1dfa-47d8-8593-afa2a21acaa4}</Project>
+      <Name>Ford_Diagnostics</Name>
+    </ProjectReference>
     <ProjectReference Include="..\J2534\J2534.csproj">
       <Project>{d99e0de7-2f06-41e3-b33e-687e1b425a7f}</Project>
       <Name>J2534</Name>
@@ -84,10 +88,6 @@
     <ProjectReference Include="..\SAEDiag\SAEDiagnostics.csproj">
       <Project>{dba67a7e-b4c3-444e-a67a-8d9ea1037343}</Project>
       <Name>SAEDiagnostics</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WindowsFormsApplication1\Ford_Diagnostics.csproj">
-      <Project>{df14a6bb-1dfa-47d8-8593-afa2a21acaa4}</Project>
-      <Name>Ford_Diagnostics</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

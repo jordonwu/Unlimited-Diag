@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace J2534
 {
-    internal static class NativeMethods
+    internal static class Kernal32
     {
         [DllImport("kernel32.dll")]
         public static extern IntPtr LoadLibrary(string Library);
@@ -141,26 +141,26 @@ namespace J2534
         {
             API_SIGNATURE APISignature = new API_SIGNATURE();
 
-            pLibrary = NativeMethods.LoadLibrary(FileName);
+            pLibrary = Kernal32.LoadLibrary(FileName);
 
             if (pLibrary == IntPtr.Zero)
                 return APISignature;
 
-            IntPtr pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruOpen");
+            IntPtr pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruOpen");
             if (pFunction != IntPtr.Zero)
             {
                 Open = Marshal.GetDelegateForFunctionPointer<PassThruOpen>(pFunction);
                 APISignature.SAE_API |= SAE_API.OPEN;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruClose");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruClose");
             if (pFunction != IntPtr.Zero)
             {
                 Close = Marshal.GetDelegateForFunctionPointer<PassThruClose>(pFunction);
                 APISignature.SAE_API |= SAE_API.CLOSE;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruConnect");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruConnect");
             if (pFunction != IntPtr.Zero)
             {
                 //If the API is v4.04 (because it has 'PassThruOpen')
@@ -182,56 +182,56 @@ namespace J2534
                 APISignature.SAE_API |= SAE_API.CONNECT;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruDisconnect");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruDisconnect");
             if (pFunction != IntPtr.Zero)
             {
                 Disconnect = Marshal.GetDelegateForFunctionPointer<PassThruDisconnect>(pFunction);
                 APISignature.SAE_API |= SAE_API.DISCONNECT;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruReadMsgs");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruReadMsgs");
             if (pFunction != IntPtr.Zero)
             {
                 ReadMsgs = Marshal.GetDelegateForFunctionPointer<PassThruReadMsgs>(pFunction);
                 APISignature.SAE_API |= SAE_API.READMSGS;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruWriteMsgs");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruWriteMsgs");
             if (pFunction != IntPtr.Zero)
             {
                 WriteMsgs = Marshal.GetDelegateForFunctionPointer<PassThruWriteMsgs>(pFunction);
                 APISignature.SAE_API |= SAE_API.WRITEMSGS;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruStartPeriodicMsg");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruStartPeriodicMsg");
             if (pFunction != IntPtr.Zero)
             {
                 StartPeriodicMsg = Marshal.GetDelegateForFunctionPointer<PassThruStartPeriodicMsg>(pFunction);
                 APISignature.SAE_API |= SAE_API.STARTPERIODICMSG;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruStopPeriodicMsg");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruStopPeriodicMsg");
             if (pFunction != IntPtr.Zero)
             {
                 StopPeriodicMsg = Marshal.GetDelegateForFunctionPointer<PassThruStopPeriodicMsg>(pFunction);
                 APISignature.SAE_API |= SAE_API.STOPPERIODICMSG;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruStartMsgFilter");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruStartMsgFilter");
             if (pFunction != IntPtr.Zero)
             {
                 StartMsgFilter = Marshal.GetDelegateForFunctionPointer<PassThruStartMsgFilter>(pFunction);
                 APISignature.SAE_API |= SAE_API.STARTMSGFILTER;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruStopMsgFilter");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruStopMsgFilter");
             if (pFunction != IntPtr.Zero)
             {
                 StopMsgFilter = Marshal.GetDelegateForFunctionPointer<PassThruStopMsgFilter>(pFunction);
                 APISignature.SAE_API |= SAE_API.STOPMSGFILTER;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruSetProgrammingVoltage");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruSetProgrammingVoltage");
             if (pFunction != IntPtr.Zero)
             {
                 //If the API is v4.04 (because it has 'PassThruOpen')
@@ -253,7 +253,7 @@ namespace J2534
                 APISignature.SAE_API |= SAE_API.SETPROGRAMMINGVOLTAGE;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruReadVersion");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruReadVersion");
             if (pFunction != IntPtr.Zero)
             {
                 //If the API is v4.04 (because it has 'PassThruOpen')
@@ -275,14 +275,14 @@ namespace J2534
                 APISignature.SAE_API |= SAE_API.READVERSION;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruGetLastError");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruGetLastError");
             if (pFunction != IntPtr.Zero)
             {
                 GetLastError = Marshal.GetDelegateForFunctionPointer<PassThruGetLastError>(pFunction);
                 APISignature.SAE_API |= SAE_API.GETLASTERROR;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruIoctl");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruIoctl");
             if (pFunction != IntPtr.Zero)
             {
                 IOCtl = Marshal.GetDelegateForFunctionPointer<PassThruIoctl>(pFunction);
@@ -290,49 +290,49 @@ namespace J2534
             }
 
             //********************J2534v5*********************
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruScanForDevices");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruScanForDevices");
             if (pFunction != IntPtr.Zero)
             {
                 ScanForDevices = Marshal.GetDelegateForFunctionPointer<PassThruScanForDevices>(pFunction);
                 APISignature.SAE_API |= SAE_API.SCANFORDEVICES;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruGetNextDevice");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruGetNextDevice");
             if (pFunction != IntPtr.Zero)
             {
                 GetNextDevice = Marshal.GetDelegateForFunctionPointer<PassThruGetNextDevice>(pFunction);
                 APISignature.SAE_API |= SAE_API.GETNEXTDEVICE;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruLogicalConnect");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruLogicalConnect");
             if (pFunction != IntPtr.Zero)
             {
                 LogicalConnect = Marshal.GetDelegateForFunctionPointer<PassThruLogicalConnect>(pFunction);
                 APISignature.SAE_API |= SAE_API.LOGICALCONNECT;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruLogicalDisconnect");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruLogicalDisconnect");
             if (pFunction != IntPtr.Zero)
             {
                 LogicalDisconnect = Marshal.GetDelegateForFunctionPointer<PassThruLogicalDisconnect>(pFunction);
                 APISignature.SAE_API |= SAE_API.LOGICALDISCONNECT;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruSelect");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruSelect");
             if (pFunction != IntPtr.Zero)
             {
                 Select = Marshal.GetDelegateForFunctionPointer<PassThruSelect>(pFunction);
                 APISignature.SAE_API |= SAE_API.SELECT;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruQueueMsgs");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruQueueMsgs");
             if (pFunction != IntPtr.Zero)
             {
                 QueueMsgs = Marshal.GetDelegateForFunctionPointer<PassThruQueueMsgs>(pFunction);
                 APISignature.SAE_API |= SAE_API.QUEUEMESSAGES;
             }
 
-            pFunction = NativeMethods.GetProcAddress(pLibrary, "PassThruGetNextCarDAQ");
+            pFunction = Kernal32.GetProcAddress(pLibrary, "PassThruGetNextCarDAQ");
             if (pFunction != IntPtr.Zero)
             {
                 GetNextCarDAQ = Marshal.GetDelegateForFunctionPointer<PassThruGetNextCarDAQ>(pFunction);
@@ -344,7 +344,7 @@ namespace J2534
 
         internal bool FreeLibrary()
         {
-            return NativeMethods.FreeLibrary(pLibrary);
+            return Kernal32.FreeLibrary(pLibrary);
         }
 
         // Public implementation of Dispose pattern callable by consumers.
@@ -368,7 +368,7 @@ namespace J2534
 
             // Free any unmanaged objects here.
             //
-            NativeMethods.FreeLibrary(pLibrary);
+            Kernal32.FreeLibrary(pLibrary);
             disposed = true;
         }
     }

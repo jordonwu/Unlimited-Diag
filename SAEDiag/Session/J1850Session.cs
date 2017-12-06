@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using J2534;
 
@@ -28,9 +29,9 @@ namespace SAE.Session
             MessageParser.RxDataIndex = RxDataIndex;
 
             Results = channel.MessageTransaction(MessageParser.RawMessage, 1, MessageParser.DefaultRxComparer);
-            if (Results.Status.IsClear)
+            if (Results.Status.IsOK)
             {
-                MessageParser.RawMessage = Results.Messages[0].Data;
+                MessageParser.RawMessage = (byte [])Results.Messages[0].Data;
                 ReturnMessage.Mode = MessageParser.SAEMode;
                 ReturnMessage.Data = MessageParser.Data;
                 ReturnMessage.Response = MessageParser.ResponseByte;
@@ -54,7 +55,7 @@ namespace SAE.Session
             });
 
             J2534Status Status = channel.SendMessages(J2534Messages);
-            if(Status.IsNOTClear)
+            if(Status.IsNotOK)
             {
                 throw new J2534Exception(Status);
             }
@@ -65,16 +66,11 @@ namespace SAE.Session
             J1850Message MessageParser = new J1850Message(default_message_prototype);
             MessageParser.TargetAddress = Addr;
             MessageParser.SAEMode = Mode;
-            //MessageParser.Data = (Params == null) ? Array.Empty<byte>() : Params;
-            //MessageParser.RxDataIndex = Params.Length;
 
             Predicate<J2534Message> Comparer = (TestMessage =>
             {
-                if (TestMessage.Data.Length > 3 &&
-                    TestMessage.Data[1] == MessageParser.SourceAddress &&
-                    TestMessage.Data[2] == MessageParser.TargetAddress &&
-                    TestMessage.Data[3] == (byte)Mode &&
-                    TestMessage.RxStatus == J2534.J2534RXFLAG.NONE)
+                if(TestMessage.Data.Skip(1).Take(3).SequenceEqual(MessageParser.RawMessage.Skip(1).Take(3))
+                   && TestMessage.RxStatus == J2534.J2534RXFLAG.NONE)
                 {
                     return true;
                 }
@@ -100,7 +96,7 @@ namespace SAE.Session
             }
             Results.Messages.ForEach(j2534message =>
             {
-                MessageParser.RawMessage = j2534message.Data;
+                MessageParser.RawMessage = (byte [])j2534message.Data;  //This should always be a byte [] so, no type checking is done.
                 Messages.Add(MessageParser.Data);
             });
             return Messages;

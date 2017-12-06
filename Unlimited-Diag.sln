@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utility Classes", "Utility 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ford_Diagnostics", "FordDiagnostics\Ford_Diagnostics.csproj", "{DF14A6BB-1DFA-47D8-8593-AFA2A21ACAA4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RealtimeQueue", "RealtimeQueue\RealtimeQueue.csproj", "{4BE1DFFC-2A93-4AFF-A575-1F9292229AF6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{DF14A6BB-1DFA-47D8-8593-AFA2A21ACAA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DF14A6BB-1DFA-47D8-8593-AFA2A21ACAA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DF14A6BB-1DFA-47D8-8593-AFA2A21ACAA4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4BE1DFFC-2A93-4AFF-A575-1F9292229AF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BE1DFFC-2A93-4AFF-A575-1F9292229AF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BE1DFFC-2A93-4AFF-A575-1F9292229AF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BE1DFFC-2A93-4AFF-A575-1F9292229AF6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -171,6 +171,8 @@ namespace J2534
                 {
                     //Otherwise, use the v202 prototype and wrap it with the v404 call
                     Connectv202 = Marshal.GetDelegateForFunctionPointer<PassThruConnectv202>(pFunction);
+
+                    //This wrapper delegate is not 100% air tight, but is probably good enough.
                     Connect = delegate (int DeviceID, int ProtocolID, int ConnectFlags, int Baud, IntPtr ChannelID)
                     {
                         if (DeviceID == 0)
@@ -353,7 +355,6 @@ namespace J2534
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
@@ -368,8 +369,12 @@ namespace J2534
 
             // Free any unmanaged objects here.
             //
-            Kernal32.FreeLibrary(pLibrary);
+            FreeLibrary();
             disposed = true;
+        }
+        ~J2534APIWrapper()
+        {
+            Dispose(false);
         }
     }
 }

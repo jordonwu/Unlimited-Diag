@@ -11,23 +11,18 @@ namespace J2534
         private IntPtr pMessage;
         private bool disposed;
 
+        public IntPtr Ptr { get { return pMessage; } }
+
         public J2534HeapMessage()
         {
             pMessage = Marshal.AllocHGlobal(CONST.J2534MESSAGESIZE);
         }
 
-        public J2534HeapMessage(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<byte> Data)
+        public J2534HeapMessage(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<byte> Data) : this()
         {
-            pMessage = Marshal.AllocHGlobal(CONST.J2534MESSAGESIZE);
             this.ProtocolID = ProtocolID;
             this.TxFlags = TxFlags;
             this.Data = Data;
-        }
-
-        public J2534HeapMessage(J2534Message Message)
-        {
-            pMessage = Marshal.AllocHGlobal(CONST.J2534MESSAGESIZE);
-            this.Message = Message;
         }
 
         public J2534Message Message
@@ -36,21 +31,17 @@ namespace J2534
             {
                 return new J2534Message()
                 {
-                    ProtocolID = this.ProtocolID,
                     RxStatus = this.RxStatus,
-                    TxFlags = this.TxFlags,
                     Timestamp = this.Timestamp,
-                    ExtraDataIndex = this.ExtraDataIndex,
-                    Data = MarshalDataArray(pMessage),
+                    //ExtraDataIndex = this.ExtraDataIndex,
+                    Data = this.Data
                 };
             }
             set
             {
-                this.ProtocolID = value.ProtocolID;
-                this.RxStatus = value.RxStatus;
                 this.TxFlags = value.TxFlags;
                 this.Timestamp = value.Timestamp;
-                this.ExtraDataIndex = value.ExtraDataIndex;
+                //this.ExtraDataIndex = value.ExtraDataIndex;
                 this.Data = value.Data;
             }
         }
@@ -123,6 +114,10 @@ namespace J2534
             }
             private set
             {
+                if (value > CONST.J2534MESSAGESIZE)
+                {
+                    throw new ArgumentException("Message Data.Length is greator than fixed maximum");
+                }
                 Marshal.WriteInt32(pMessage, 16, value);
             }
         }
@@ -131,46 +126,46 @@ namespace J2534
         {
             get
             {
-                return MarshalDataArray(pMessage);
+                byte[] data = new byte[Marshal.ReadInt32(pMessage, 16)];
+                Marshal.Copy(IntPtr.Add(pMessage, 24), data, 0, data.Length);
+                return data;
             }
             set
             {
-                if (value.Count() > (CONST.J2534MESSAGESIZE - 24))
+                if (value is byte[])  //Byte[] is fastest
                 {
-                    throw new ArgumentException("Message Data.Length is greator than fixed maximum");
+                    var ValueAsArray = (byte[])value;
+                    Length = ValueAsArray.Length;
+                    Marshal.Copy(ValueAsArray, 0, IntPtr.Add(pMessage, 24), ValueAsArray.Length);
                 }
-                else
+                else if (value is IList<byte>)   //Collection with indexer is second best
                 {
-                    Length = value.Count();
-                    Marshal.Copy(value.ToArray(), 0, IntPtr.Add(pMessage, 24), value.Count());
+                    var ValueAsList = (IList<byte>)value;
+                    int length = ValueAsList.Count;
+                    IntPtr Ptr = IntPtr.Add(pMessage, 24);  //Offset to data array
+                    Length = length;
+                    for (int indexer = 0; indexer < length; indexer++)
+                    {
+                        Marshal.WriteByte(Ptr, indexer, ValueAsList[indexer]);
+                    }
+                }
+                else//Enumerator is third
+                {
+                    IntPtr Ptr = IntPtr.Add(pMessage, 24);  //Offset to data array
+                    int index_count = 0;
+                    foreach (byte b in value)
+                    {
+                        Marshal.WriteByte(Ptr, index_count, b);
+                        index_count++;
+                    }
+                    Length = index_count;  //Set length
                 }
             }
-        }
-
-        private static byte[] MarshalDataArray(IntPtr pData)
-        {
-            int Length = Marshal.ReadInt32(pData, 16);
-            byte[] data = new byte[Length];
-            Marshal.Copy(IntPtr.Add(pData, 24), data, 0, Length);
-            return data;
-        }
-
-        public static implicit operator IntPtr(J2534HeapMessage HeapMessage)
-        {
-            return HeapMessage.pMessage;
         }
 
         public static implicit operator J2534Message(J2534HeapMessage HeapMessage)
         {
-            return new J2534Message()
-            {
-                ProtocolID = (J2534PROTOCOL)Marshal.ReadInt32(HeapMessage.pMessage),
-                RxStatus = (J2534RXFLAG)Marshal.ReadInt32(HeapMessage.pMessage, 4),
-                TxFlags = (J2534TXFLAG)Marshal.ReadInt32(HeapMessage.pMessage, 8),
-                Timestamp = (uint)Marshal.ReadInt32(HeapMessage.pMessage, -12),
-                ExtraDataIndex = (uint)Marshal.ReadInt32(HeapMessage.pMessage, 20),
-                Data = MarshalDataArray(HeapMessage.pMessage),
-            };
+            return HeapMessage.Message;
         }
 
         // Public implementation of Dispose pattern callable by consumers.
@@ -179,7 +174,6 @@ namespace J2534
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
@@ -196,6 +190,10 @@ namespace J2534
             //
             Marshal.FreeHGlobal(pMessage);
             disposed = true;
+        }
+        ~J2534HeapMessage()
+        {
+            Dispose(false);
         }
     }
 }

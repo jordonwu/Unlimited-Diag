@@ -44,7 +44,7 @@ namespace J2534
             {   
                 if (!ValidDevice) return false;
                 //GetVersion is used as a 'ping'
-                return (GetVersion().IsClear);
+                return (GetVersion().IsOK);
             }
         }
 
@@ -66,7 +66,7 @@ namespace J2534
 
                 Marshal.FreeHGlobal(pDeviceName);
 
-                if (Status.IsClear || (Library.API_Signature.SAE_API == SAE_API.V202_SIGNATURE &&
+                if (Status.IsOK || (Library.API_Signature.SAE_API == SAE_API.V202_SIGNATURE &&
                                        J2534Discovery.PhysicalDevices.FindAll(Listed => Listed.Library == this.Library).Count == 0 &&
                                        IsConnected))
                 {
@@ -89,7 +89,7 @@ namespace J2534
             lock (Library.API_LOCK)
             {
                 Status.Code = Library.API.Close(DeviceID);
-                if (Status.IsNOTClear)
+                if (Status.IsNotOK)
                 {
                     Status.Description = Library.GetLastError();
                     throw new J2534Exception(Status);
@@ -103,7 +103,7 @@ namespace J2534
             lock (Library.API_LOCK)
             {
                 Status.Code = Library.API.SetProgrammingVoltage(DeviceID, (int)PinNumber, Voltage);
-                if (Status.IsNOTClear)
+                if (Status.IsNotOK)
                 {
                     Status.Description = Library.GetLastError();
                     throw new J2534Exception(Status);
@@ -122,7 +122,7 @@ namespace J2534
             {
                 Status.Code = Library.API.ReadVersion(DeviceID, pFirmwareVersion, pDllVersion, pApiVersion);
 
-                if (Status.IsClear)
+                if (Status.IsOK)
                 {
                     FirmwareVersion = Marshal.PtrToStringAnsi(pFirmwareVersion);
                     LibraryVersion = Marshal.PtrToStringAnsi(pDllVersion);
@@ -149,7 +149,7 @@ namespace J2534
             lock (Library.API_LOCK)
             {
                 Status.Code = Library.API.IOCtl(DeviceID, (int)J2534IOCTL.READ_VBATT, IntPtr.Zero, Voltage);
-                if (Status.IsNOTClear)
+                if (Status.IsNotOK)
                 {
                     Status.Description = Library.GetLastError();
                     throw new J2534Exception(Status);
@@ -171,7 +171,7 @@ namespace J2534
             lock (Library.API_LOCK)
             {
                 Status.Code = Library.API.IOCtl(DeviceID, (int)J2534IOCTL.READ_PROG_VOLTAGE, IntPtr.Zero, Voltage);
-                if (Status.IsNOTClear)
+                if (Status.IsNotOK)
                 {
                     Status.Description = Library.GetLastError();
                     throw new J2534Exception(Status);

@@ -8,6 +8,8 @@ namespace J2534
         private IntPtr pSByteArray;
         private bool disposed;
 
+        public IntPtr Ptr { get { return pSByteArray; } }
+
         public HeapSByteArray(byte SingleByte)
         {
             pSByteArray = Marshal.AllocHGlobal(9);
@@ -46,11 +48,6 @@ namespace J2534
             }
         }
 
-        public static implicit operator IntPtr(HeapSByteArray HeapSByteArray)
-        {
-            return HeapSByteArray.pSByteArray;
-        }
-
         public static implicit operator byte[] (HeapSByteArray HeapSByteArray)
         {
             int Length = Marshal.ReadInt32(HeapSByteArray.pSByteArray);
@@ -64,7 +61,6 @@ namespace J2534
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
@@ -81,6 +77,10 @@ namespace J2534
             //
             Marshal.FreeHGlobal(pSByteArray);
             disposed = true;
+        }
+        ~HeapSByteArray()
+        {
+            Dispose(false);
         }
     }
 }

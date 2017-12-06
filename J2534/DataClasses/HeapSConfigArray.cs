@@ -23,7 +23,8 @@ namespace J2534
     {
         private IntPtr pSConfigArrayHeap;
         private bool disposed;
-        //private int count;
+
+        public IntPtr Ptr { get { return pSConfigArrayHeap; } }
 
         public HeapSConfigArray(SConfig ConfigItem)
         {
@@ -72,11 +73,6 @@ namespace J2534
             }
         }
 
-        public static implicit operator IntPtr(HeapSConfigArray SConfigList)
-        {
-            return SConfigList.pSConfigArrayHeap;
-        }
-
         public List<SConfig> ToList()
         {
             List<SConfig> List = new List<SConfig>(Length);
@@ -91,7 +87,6 @@ namespace J2534
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
@@ -108,6 +103,10 @@ namespace J2534
             //
             Marshal.FreeHGlobal(pSConfigArrayHeap);
             disposed = true;
+        }
+        ~HeapSConfigArray()
+        {
+            Dispose(false);
         }
     }
 }

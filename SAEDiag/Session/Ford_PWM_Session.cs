@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using J2534;
 
 namespace SAE.Session.Ford
@@ -40,10 +41,8 @@ namespace SAE.Session.Ford
             channel.ClearRxBuffer();
             broadcast_rx_handle = (TestMessage =>
             {
-                if (TestMessage.Data.Length > 4
-                    && TestMessage.Data[1] == 0x05
-                    && TestMessage.Data[2] == 0x10
-                    && TestMessage.Data[3] == 0x04)
+                byte[] broadcast_signature = new byte[] { 0x05, 0x10, 0x04 };
+                if (TestMessage.Data.Skip(1).Take(3).SequenceEqual(broadcast_signature))
                     return true;
                 return false;
             });
@@ -53,9 +52,9 @@ namespace SAE.Session.Ford
         public bool CatchBroadcastMessage(int Timeout = 200)
         {
             GetMessageResults Results = channel.GetMessages(1, Timeout, broadcast_rx_handle, false);
-            if (Results.Status.IsNOTClear)
+            if (Results.Status.IsNotOK)
                 return false;
-            broadcastmessage = Results.Messages[0].Data;
+            broadcastmessage = (byte [])Results.Messages[0].Data;
             channel.RemoveMessageScreen(broadcast_rx_handle);
             return true;
         }

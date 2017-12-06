@@ -17,7 +17,7 @@ namespace J2534
             this.Code = Code;
         }
 
-        public bool IsClear
+        public bool IsOK
         {
             get
             {
@@ -25,7 +25,7 @@ namespace J2534
             }
         }
 
-        public bool IsNOTClear
+        public bool IsNotOK
         {
             get
             {

@@ -99,12 +99,11 @@ namespace J2534
             lock (API_LOCK)
             {
                 Status.Code = API.GetNextCarDAQ(IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
-                if (Status.IsNOTClear)
+                if (Status.IsNotOK)
                 {
                     Status.Description = GetLastError();
                 }
             }
-
             return Status;
         }
 
@@ -127,7 +126,7 @@ namespace J2534
                     Marshal.FreeHGlobal(pAddr);
                     return new GetNextCarDAQResults() { Exists = false };
                 }
-                else if (Status.IsNOTClear)
+                else if (Status.IsNotOK)
                 {
                     Status.Description = GetLastError();
                     Marshal.FreeHGlobal(pName);

@@ -8,6 +8,8 @@ namespace J2534
         private bool disposed;
         private IntPtr pInt;
 
+        public IntPtr Ptr { get { return pInt; } }
+
         public J2534HeapInt()
         {
             pInt = Marshal.AllocHGlobal(4);
@@ -17,11 +19,6 @@ namespace J2534
         {
             pInt = Marshal.AllocHGlobal(4);
             Marshal.WriteInt32(pInt, i);
-        }
-
-        public static implicit operator IntPtr(J2534HeapInt HeapInt)
-        {
-            return HeapInt.pInt;
         }
 
         public static implicit operator int(J2534HeapInt HeapInt)
@@ -40,7 +37,6 @@ namespace J2534
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
@@ -57,6 +53,10 @@ namespace J2534
             //
             Marshal.FreeHGlobal(pInt);
             disposed = true;
+        }
+        ~J2534HeapInt()
+        {
+            Dispose(false);
         }
     }
 }

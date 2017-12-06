@@ -274,6 +274,7 @@ namespace J2534
         ADC_READINGS_PER_SECOND = 0x10000,  //Drewtech
         ADC_READINGS_PER_SAMPLE = 0x20000  //Drewtech
     }
+
     [Flags]
     internal enum SAE_API
     {

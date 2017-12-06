@@ -28,7 +28,7 @@ namespace J2534
         static private void ConnectAllDevices(J2534Library DLL)
         {
             //If the DLL successfully executes GetNextCarDAQ_RESET()
-            if (DLL.GetNextCarDAQ_RESET().IsClear)
+            if (DLL.GetNextCarDAQ_RESET().IsOK)
             {
                 GetNextCarDAQResults TargetDrewtechDevice = DLL.GetNextCarDAQ();
                 while (TargetDrewtechDevice.Exists)

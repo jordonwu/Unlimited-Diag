@@ -3,15 +3,19 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace J2534
 {
     public class J2534HeapMessageArray : IDisposable
     {
+        private int global_protocol_id;
         private int array_max_length;
         private IntPtr pMessages;
         private J2534HeapInt length;
         private bool disposed;
+
+        public IntPtr Ptr { get { return pMessages; } }
 
         public J2534HeapMessageArray(int Length)
         {
@@ -39,52 +43,63 @@ namespace J2534
             }
         }
 
-        public J2534Message this[int index]
-
+        private J2534PROTOCOL ProtocolID
         {
             get
             {
-                if (index > length)
-                {
-                    throw new IndexOutOfRangeException("Index is greater than array bound");
-                }
-                IntPtr pMessage = IntPtr.Add(pMessages, index * CONST.J2534MESSAGESIZE);
-                return new J2534Message()
-                {
-                    ProtocolID = (J2534PROTOCOL)Marshal.ReadInt32(pMessage),
-                    RxStatus = (J2534RXFLAG)Marshal.ReadInt32(pMessage, 4),
-                    TxFlags = (J2534TXFLAG)Marshal.ReadInt32(pMessage, 8),
-                    Timestamp = (uint)Marshal.ReadInt32(pMessage, 12),
-                    ExtraDataIndex = (uint)Marshal.ReadInt32(pMessage, 20),
-                    Data = MarshalDataArray(pMessage),
-                };
+                global_protocol_id = Marshal.ReadInt32(pMessages); //return the ProtocolID of the first message in the array
+                return (J2534PROTOCOL)global_protocol_id;
             }
             set
             {
-                if (index > length)
-                {
-                    throw new IndexOutOfRangeException("Index is greater than array bound");
-                }
-                IntPtr pMessage = IntPtr.Add(pMessages, index * CONST.J2534MESSAGESIZE);
-                Marshal.WriteInt32(pMessage, (int)value.ProtocolID);
-                Marshal.WriteInt32(pMessage, 4, (int)value.RxStatus);
-                Marshal.WriteInt32(pMessage, 8, (int)value.TxFlags);
-                Marshal.WriteInt32(pMessage, 12, (int)value.Timestamp);
-                Marshal.WriteInt32(pMessage, 16, (int)value.Data.Count());
-                Marshal.WriteInt32(pMessage, 20, (int)value.ExtraDataIndex);
-                Marshal.Copy(value.Data.ToArray(), 0, IntPtr.Add(pMessage, 24), value.Data.Count());
+                global_protocol_id = (int)value;
             }
         }
 
-        public List<J2534Message> ToList()
+        public J2534Message this[int index]
         {
-            List<J2534Message> return_list = new List<J2534Message>();
-            for (int i = 0; i < Length; i++)
-                return_list.Add(this[i]);
-            return return_list;
+            get
+            {
+                if (index < length &&
+                    index >= 0)
+                    return ElementAt(index);
+                throw new IndexOutOfRangeException("Index out of range in J2534HeapMessageArray get[]");
+            }
+            set
+            {
+                if (index < length &&
+                    index >= 0)
+                    InsertAt(index, value);
+                throw new IndexOutOfRangeException("Index out of range in J2534HeapMessageArray set[]");
+            }
         }
 
-        private byte[] MarshalDataArray(IntPtr pData)
+        //This method is kept private because it bypasses bounds checks
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private J2534Message ElementAt(int index)
+        {
+            IntPtr pMessage = IntPtr.Add(pMessages, index * CONST.J2534MESSAGESIZE);
+            return new J2534Message()
+            {
+                FlagsAsInt = Marshal.ReadInt32(pMessage, 4),
+                Timestamp = (uint)Marshal.ReadInt32(pMessage, 12),
+                //ExtraDataIndex = (uint)Marshal.ReadInt32(pMessage, 20),
+                Data = MarshalHeapDataToArray(pMessage),
+            };
+        }
+
+        //This method is kept private because it bypasses bounds checks
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void InsertAt(int index, J2534Message value)
+        {
+            IntPtr pMessage = IntPtr.Add(pMessages, index * CONST.J2534MESSAGESIZE);
+            Marshal.WriteInt32(pMessage, global_protocol_id);
+            Marshal.WriteInt32(pMessage, 8, value.FlagsAsInt);
+            MarshalIEnumerableToHeapData(pMessage, value.Data);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private byte[] MarshalHeapDataToArray(IntPtr pData)
         {
             int Length = Marshal.ReadInt32(pData, 16);
             byte[] data = new byte[Length];
@@ -92,74 +107,77 @@ namespace J2534
             return data;
         }
 
-        public IntPtr Ptr
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void MarshalIEnumerableToHeapData(IntPtr pMessage, IEnumerable<byte> Data)
         {
-            get
+            if (Data is byte[])  //Byte[] is fastest
             {
-                return pMessages;
+                var DataAsArray = (byte[])Data;
+                Marshal.WriteInt32(pMessage, 16, DataAsArray.Length);
+                Marshal.Copy(DataAsArray, 0, IntPtr.Add(pMessage, 24), DataAsArray.Length);
+            }
+            else if (Data is IList<byte>)   //Collection with indexer is second best
+            {
+                var DataAsList = (IList<byte>)Data;
+                int length = DataAsList.Count;
+                IntPtr Ptr = IntPtr.Add(pMessage, 24);  //Offset to data array
+                Marshal.WriteInt32(pMessage, 16, length);
+                for (int indexer = 0; indexer < length; indexer++)
+                {
+                    Marshal.WriteByte(Ptr, indexer, DataAsList[indexer]);
+                }
+            }
+            else//Enumerator is third
+            {
+                IntPtr Ptr = IntPtr.Add(pMessage, 24);  //Offset to data array
+                int index_count = 0;
+                foreach (byte b in Data)
+                {
+                    Marshal.WriteByte(Ptr, index_count, b);
+                    index_count++;
+                }
+                Marshal.WriteInt32(pMessage, 16, index_count);  //Set length
             }
         }
 
-        public void Insert(IEnumerable<J2534Message> Messages)
+        public J2534MessageList ToJ2534MessageList()
         {
-            var MessageEnumerator = Messages.GetEnumerator();
+            J2534MessageList return_list = new J2534MessageList();
+            return_list.ProtocolID = ProtocolID;
+            for (int i = 0; i < Length; i++)
+                return_list.Add(ElementAt(i));
+            return return_list;
+        }
+
+        public void DeepCopy(J2534MessageList Messages)
+        {
+            if (Messages.Count > array_max_length)
+                throw new ArgumentException("J2534MessageList Count exceeds J2534HeapMessageArray buffer length!");
+            ProtocolID = Messages.ProtocolID;
             int index = 0;
-            foreach(J2534Message Message in Messages)
+            for (; index < Messages.Count;index++)
             {
-                this[index] = Message;
+                InsertAt(index, Messages[index]);
                 index++;
             }
             Length = index;
         }
 
-        public void Insert(J2534Message Message)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void InsertSingle(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<byte> Data)
         {
             Length = 1;
-            this[0] = Message;
-        }
-
-        public void Insert(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<byte> Data)
-        {
-            Length = 1;
-            byte[] dataarray = Data.ToArray();
             Marshal.WriteInt32(pMessages, (int)ProtocolID);
             Marshal.WriteInt32(pMessages, 8, (int)TxFlags);
-            Marshal.WriteInt32(pMessages, 16, Data.Count());
-            Marshal.Copy(dataarray, 0, IntPtr.Add(pMessages, 24), dataarray.Length);
+            MarshalIEnumerableToHeapData(pMessages, Data);
         }
 
-        public void DeepCopy(J2534PROTOCOL ProtocolID, J2534TXFLAG TxFlags, IEnumerable<IEnumerable<byte>> DataList)
-        {
-            IntPtr pMessage = new IntPtr((int)pMessages);
-            int index = 0;
-            byte [] dataarray;
-            foreach (var Data in DataList)
-            {
-                index++;
-                if (index > array_max_length)
-                {
-                    throw new IndexOutOfRangeException("Index is greater than array bound");
-                }
-                Marshal.WriteInt32(pMessage, (int)ProtocolID);
-                Marshal.WriteInt32(pMessage, 8, (int)TxFlags);
-                if (Data is Array)  //Save the cost of newing an array
-                    dataarray = (byte[])Data;
-                else
-                    dataarray = Data.ToArray();
-                Marshal.WriteInt32(pMessage, 16, dataarray.Length);
-                Marshal.Copy(dataarray, 0, IntPtr.Add(pMessage, 24), dataarray.Length);
-
-                pMessage = IntPtr.Add(pMessage, CONST.J2534MESSAGESIZE);
-            }
-            Length = index;
-        }
         // Public implementation of Dispose pattern callable by consumers.
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
@@ -177,6 +195,10 @@ namespace J2534
             Marshal.FreeHGlobal(pMessages);
             length.Dispose();
             disposed = true;
+        }
+        ~J2534HeapMessageArray()
+        {
+            Dispose(false);
         }
     }
 }

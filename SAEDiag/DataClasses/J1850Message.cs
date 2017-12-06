@@ -233,30 +233,36 @@ namespace SAE
                 {
                     return (TestMessage =>
                                            {
-                                               if (TestMessage.Data.Length > 3 &&
-                                                   TestMessage.Data[1] == SourceAddress &&
-                                                   TestMessage.Data[2] == TargetAddress &&
+                                               byte[] Data;
+                                               if (TestMessage.Data is byte[])
+                                                   Data = (byte [])TestMessage.Data;
+                                               else
+                                                   Data = TestMessage.Data.ToArray();
+
+                                               if (Data.Length > 3 &&
+                                                   Data[1] == SourceAddress &&
+                                                   Data[2] == TargetAddress &&
                                                    TestMessage.RxStatus == J2534.J2534RXFLAG.NONE)
                                                {
-                                                   if (TestMessage.Data[3] == (byte)SAEMode.ResponseMode)
+                                                   if (Data[3] == (byte)SAEMode.ResponseMode)
                                                    {
                                                        return true;
                                                        if (RxDataIndex == 0)    //If the message has no parameter bytes
                                                            return true;
-                                                       if(TestMessage.Data.Length > (RxDataIndex + 3))
+                                                       if(Data.Length > (RxDataIndex + 3))
                                                        {
                                                            for(int i = 4;i < (RxDataIndex + 4); i++)    //Test the parameter bytes
                                                            {
-                                                               if (TestMessage.Data[i] != RawMessage[i])
+                                                               if (Data[i] != RawMessage[i])
                                                                    return false;    //Fail if there is a non-match
                                                            }
                                                            return true; //pass if all parameter bytes match
                                                        }
                                                        return false;    //Fail if there are not enough bytes in the message
                                                    }
-                                                   else if (TestMessage.Data[3] == (byte)SAEModes.GENERAL_RESPONSE &&
-                                                           TestMessage.Data.Length > 4 &&
-                                                           TestMessage.Data[4] == (byte)SAEMode)
+                                                   else if (Data[3] == (byte)SAEModes.GENERAL_RESPONSE &&
+                                                            Data.Length > 4 &&
+                                                            Data[4] == (byte)SAEMode)
                                                        return true;
                                                    else
                                                        return false;
